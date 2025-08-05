@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.next/
+.pnpm-store/
+.env
+.github/wkf-pend/
+.github/
+private/
+others/
