@@ -40,13 +40,13 @@ interface BrandType {
   blogRevenueRate?: number;
   mobileConfig?: MobileConfig;
   requestFrom?:
-    | 'primaryDomain'
-    | 'customDomain'
-    | 'subDomain'
-    | 'customDomainSubFolder'
-    | 'subFolder';
-  inhouseMonetization?: 'active' | 'inactive';
-  googleMonetization?: 'active' | 'inactive';
+    | "primaryDomain"
+    | "customDomain"
+    | "subDomain"
+    | "customDomainSubFolder"
+    | "subFolder";
+  inhouseMonetization?: "active" | "inactive";
+  googleMonetization?: "active" | "inactive";
   additional_inhouse_product_price?: number;
   additional_pack_inclusion?: number;
   crypto_rate?: number;
@@ -107,7 +107,7 @@ interface DomainInfoModel {
 interface MobileConfig {
   appName?: string;
   bundleId?: string;
-  platform?: 'android' | 'ios' | 'both';
+  platform?: "android" | "ios" | "both";
   darkMode?: boolean;
   icon?: string;
   logo?: string;
