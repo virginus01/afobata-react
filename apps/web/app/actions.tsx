@@ -1,19 +1,19 @@
-'use server';
+"use server";
 
-import { revalidateTag } from 'next/cache';
-import { cookies } from 'next/headers';
-import OpenAI from 'openai';
-import { apiEndPoint } from '@/app/helpers/apiEndPoint';
-import { modHeaders } from '@/app/helpers/modHeaders';
-import { show_error } from '@/app/helpers/show_error';
-import { getAuthSessionData } from '@/app/controller/auth_controller';
-import { isNull } from '@/app/helpers/isNull';
+import { revalidateTag } from "next/cache";
+import { cookies } from "next/headers";
+import OpenAI from "openai";
+import { apiEndPoint } from "@/app/helpers/apiEndPoint";
+import { modHeaders } from "@/app/helpers/modHeaders";
+import { show_error } from "@/app/helpers/show_error";
+import { getAuthSessionData } from "@/app/controller/auth_controller";
+import { isNull } from "@/app/helpers/isNull";
 
 type RequestOptions = {
   url: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   data?: any;
-  headersType?: 'mod' | 'basic' | 'apiKey';
+  headersType?: "mod" | "basic" | "apiKey";
   remark: string;
   iniOptions: any;
 };
@@ -24,9 +24,9 @@ export async function clearCache(tag: string) {
 
 export async function apiRequest({
   url,
-  method = 'GET',
+  method = "GET",
   data,
-  headersType = 'mod',
+  headersType = "mod",
   remark,
   iniOptions = {},
 }: RequestOptions): Promise<any> {
@@ -41,22 +41,22 @@ export async function apiRequest({
   }
 
   let headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     Authorization: `Bearer ${auth.accessToken}`,
   };
 
   switch (headersType) {
-    case 'mod':
+    case "mod":
       headers = await modHeaders(method.toLowerCase() as any);
       break;
-    case 'apiKey':
+    case "apiKey":
       headers = {
         ...headers,
-        'x-api-key': auth.api_key ?? '',
-        'x-api-secret': auth.api_secret ?? '',
+        "x-api-key": auth.api_key ?? "",
+        "x-api-secret": auth.api_secret ?? "",
       };
       break;
-    case 'basic':
+    case "basic":
     default:
       headers = {
         ...headers,
@@ -71,14 +71,18 @@ export async function apiRequest({
     ...iniOptions,
   };
 
-  if (['POST', 'PATCH'].includes(method.toUpperCase()) && data) {
+  if (["POST", "PATCH"].includes(method.toUpperCase()) && data) {
     options.body = JSON.stringify(data);
   }
 
   const response = await fetch(finalUrl, options);
 
   if (!response.ok) {
-    show_error(`request error on ${remark ?? 'no remark'}: ${response.statusText}`, '', false);
+    show_error(
+      `request error on ${remark ?? "no remark"}: ${response.statusText}`,
+      "",
+      false
+    );
     return { response, result: {}, data: {} };
   }
 
@@ -92,19 +96,24 @@ export async function apiRequest({
   };
 }
 
-export async function setCookie(data: any, key: string, age = 3600, type = 'json') {
+export async function setCookie(
+  data: any,
+  key: string,
+  age = 3600,
+  type = "json"
+) {
   try {
     const cookieStore = await cookies();
-    cookieStore.set(key, type === 'json' ? JSON.stringify(data) : data, {
+    cookieStore.set(key, type === "json" ? JSON.stringify(data) : data, {
       maxAge: age,
-      httpOnly: process.env.NODE_ENV === 'production',
-      secure: process.env.NODE_ENV === 'production',
+      httpOnly: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production",
       // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
     return true;
   } catch (error) {
-    console.info(process.env.NODE_ENV === 'development' ? data : 'cookie data');
-    console.error('Error during set cookie:', error);
+    console.info(process.env.NODE_ENV === "development" ? data : "cookie data");
+    console.error("Error during set cookie:", error);
     return null;
   }
 }
@@ -113,40 +122,40 @@ export async function setPublicCookie({
   data,
   key,
   age = 3600,
-  type = 'json',
+  type = "json",
 }: {
   data: any;
   key: string;
   age?: number;
-  type?: 'json' | 'string';
+  type?: "json" | "string";
 }) {
   try {
     const cookieStore = await cookies();
 
-    cookieStore.set(key, type === 'json' ? JSON.stringify(data) : data, {
+    cookieStore.set(key, type === "json" ? JSON.stringify(data) : data, {
       maxAge: age, // in seconds
       httpOnly: false, // ✅ allow access in document.cookie
       secure: false, // ✅ allow over HTTP (dev environment)
-      sameSite: 'lax', // ✅ good default for most use cases
-      path: '/', // ✅ make cookie available site-wide
+      sameSite: "lax", // ✅ good default for most use cases
+      path: "/", // ✅ make cookie available site-wide
     });
 
     return true;
   } catch (error) {
-    console.info(process.env.NODE_ENV === 'development' ? data : 'cookie data');
-    console.error('Error during set cookie:', error);
+    console.info(process.env.NODE_ENV === "development" ? data : "cookie data");
+    console.error("Error during set cookie:", error);
     return null;
   }
 }
 
-export async function getCookie(key: string, type = 'json') {
+export async function getCookie(key: string, type = "json") {
   try {
     const cookieStore = await cookies();
     const value = cookieStore.get(key)?.value;
 
     if (isNull(value)) return null;
 
-    if (type === 'json' && value) {
+    if (type === "json" && value) {
       try {
         return JSON.parse(value);
       } catch {
@@ -156,13 +165,13 @@ export async function getCookie(key: string, type = 'json') {
 
     return value;
   } catch (error) {
-    console.error('Error during get cookie:', error);
+    console.error("Error during get cookie:", error);
     return null;
   }
 }
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
+  apiKey: process.env.OPENAI_API_KEY || "",
 });
 
 export async function getOpenAIResponse({
@@ -171,10 +180,10 @@ export async function getOpenAIResponse({
   temperature = 1,
   maxTokens = 4000,
   context,
-  instruction = 'You are a skilled blog content writer who creates HTML SEO friendly',
+  instruction = "You are a skilled blog content writer who creates HTML SEO friendly",
   promptImage = [],
 }: {
-  model: AiModelType;
+  model: any;
   prompt: string;
   temperature?: number;
   maxTokens?: number;
@@ -184,17 +193,17 @@ export async function getOpenAIResponse({
 }) {
   // Construct multimodal message content
   const messageContent: Array<any> = [];
-  let result = '';
+  let result = "";
 
   try {
     if (prompt) {
-      messageContent.push({ type: 'text', text: prompt });
+      messageContent.push({ type: "text", text: prompt });
     }
 
     if (promptImage && promptImage.length > 0) {
       for (const img of promptImage) {
         messageContent.push({
-          type: 'image_url',
+          type: "image_url",
           image_url: {
             url: img.url,
           },
@@ -203,13 +212,13 @@ export async function getOpenAIResponse({
     }
 
     const response = await openai.chat.completions.create({
-      model: model?.partnerId ?? '',
+      model: model?.partnerId ?? "",
       messages: [
-        ...(context ? [{ role: 'assistant' as const, content: context }] : []),
-        { role: 'system' as const, content: instruction ?? '' },
-        { role: 'user' as const, content: messageContent },
+        ...(context ? [{ role: "assistant" as const, content: context }] : []),
+        { role: "system" as const, content: instruction ?? "" },
+        { role: "user" as const, content: messageContent },
       ],
-      [model.maxTokenKey ?? 'max_tokens']: maxTokens,
+      [model.maxTokenKey ?? "max_tokens"]: maxTokens,
       temperature,
       stream: true,
     });

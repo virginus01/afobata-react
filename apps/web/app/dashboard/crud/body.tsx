@@ -1,36 +1,36 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import FormInput from '@/app/widgets/hook_form_input';
-import { CustomButton } from '@/app/widgets/custom_button';
-import CustomCard from '@/app/widgets/custom_card';
-import { capitalize } from '@/app/helpers/capitalize';
-import { formatNumber } from '@/app/helpers/formatNumber';
-import { isNull } from '@/app/helpers/isNull';
-import { stripHtml } from '@/app/helpers/stripHtml';
-import { truncateText } from '@/app/helpers/text';
-import { UseFormReturn } from 'react-hook-form';
-import { ToggleSwitch } from '@/app/widgets/toggle_switch_button';
-import { FaEdit, FaPlus } from 'react-icons/fa';
-import ProductDetailsComponent from '@/dashboard/crud/details_sidebar';
+import React, { useCallback, useEffect, useState } from "react";
+import FormInput from "@/app/widgets/hook_form_input";
+import { CustomButton } from "@/app/widgets/custom_button";
+import CustomCard from "@/app/widgets/custom_card";
+import { capitalize } from "@/app/helpers/capitalize";
+import { formatNumber } from "@/app/helpers/formatNumber";
+import { isNull } from "@/app/helpers/isNull";
+import { stripHtml } from "@/app/helpers/stripHtml";
+import { truncateText } from "@/app/helpers/text";
+import { UseFormReturn } from "react-hook-form";
+import { ToggleSwitch } from "@/app/widgets/toggle_switch_button";
+import { FaEdit, FaPlus } from "react-icons/fa";
+import ProductDetailsComponent from "@/dashboard/crud/details_sidebar";
 import {
   api_credit_and_debit_ai_units,
   availableAiModels,
   BASE_AI_MODEL,
-} from '@/app/src/constants';
-import { useRouter } from 'next/navigation';
-import { SearchableSelect } from '@/app/widgets/searchable_select';
-import { toast } from 'sonner';
-import { modHeaders } from '@/app/helpers/modHeaders';
-import { clearCache, getOpenAIResponse } from '@/app/actions';
-import { formatAiText, parseJsonResponse } from '@/app/utils/ai/ai_helpers';
-import { FaWandMagicSparkles } from 'react-icons/fa6';
+} from "@/app/src/constants";
+import { useRouter } from "next/navigation";
+import { SearchableSelect } from "@/app/widgets/searchable_select";
+import { toast } from "sonner";
+import { modHeaders } from "@/app/helpers/modHeaders";
+import { clearCache, getOpenAIResponse } from "@/app/actions";
+import { formatAiText, parseJsonResponse } from "@/app/utils/ai/ai_helpers";
+import { FaWandMagicSparkles } from "react-icons/fa6";
 
 export default function Body({
   setValue,
   setBody,
-  body = '<p> </p>',
-  type = 'plain',
-  title = '',
-  prompt = '',
+  body = "<p> </p>",
+  type = "plain",
+  title = "",
+  prompt = "",
   setBodyType,
   bodyType,
   siteInfo,
@@ -41,7 +41,7 @@ export default function Body({
   setValue: (name: string, value: any) => void;
   setBody: (body: string) => void;
   body: string;
-  type?: 'topic' | 'module' | 'chapter' | 'plain';
+  type?: "topic" | "module" | "chapter" | "plain";
   prompt?: string;
   title?: string;
   setBodyType: React.Dispatch<React.SetStateAction<string>>;
@@ -58,7 +58,7 @@ export default function Body({
   const [wordsLength, setwordsLength] = useState(150);
   const [unitCost, setUnitCost] = useState(0);
   const [message, setMessage] = useState<{
-    type: 'error' | 'success' | 'info';
+    type: "error" | "success" | "info";
     content: string;
   } | null>(null);
   const router = useRouter();
@@ -78,16 +78,18 @@ export default function Body({
   }, [wordsLength, model]);
 
   const handleGenerate = useCallback(async () => {
-    if (!title || title.trim() === '') {
-      toast.error('Please provide a title before generating content');
+    if (!title || title.trim() === "") {
+      toast.error("Please provide a title before generating content");
       resetState();
       return;
     }
 
     setIsGenerating(true);
-    setMessage({ type: 'success', content: 'Generating Content' });
+    setMessage({ type: "success", content: "Generating Content" });
     try {
-      const url = await api_credit_and_debit_ai_units({ subBase: siteInfo.slug });
+      const url = await api_credit_and_debit_ai_units({
+        subBase: siteInfo.slug,
+      });
       if (isNull(unitCost) || unitCost <= 0) {
         toast.error("Units can't be zero");
         setIsGenerating(false); // Added missing state reset
@@ -98,11 +100,11 @@ export default function Body({
       const body = {
         userId: user.id,
         unit: unitCost,
-        type: 'debit',
+        type: "debit",
       };
       const response = await fetch(url, {
-        method: 'POST',
-        headers: await modHeaders('post'),
+        method: "POST",
+        headers: await modHeaders("post"),
         body: JSON.stringify(body),
       });
 
@@ -114,8 +116,8 @@ export default function Body({
         setMessage(null);
         return;
       }
-      clearCache('user');
-      clearCache('users');
+      clearCache("user");
+      clearCache("users");
       router.refresh();
 
       // Step 1: Generate the list of topics
@@ -127,9 +129,12 @@ export default function Body({
       try {
         // Ensure we're passing valid, non-null values to the API
         rawResponse = await getOpenAIResponse({
-          prompt: prompt.replace('{wordsLength}', `${wordsLength}`) || contentPrompt || '',
-          model: model || BASE_AI_MODEL || '', // Added optional chaining
-          instruction: topicsInstruction || '',
+          prompt:
+            prompt.replace("{wordsLength}", `${wordsLength}`) ||
+            contentPrompt ||
+            "",
+          model: model || BASE_AI_MODEL || "", // Added optional chaining
+          instruction: topicsInstruction || "",
         });
 
         interface ContentResponse {
@@ -139,7 +144,7 @@ export default function Body({
         // Parse and type-check the response
         const contentResponse: ContentResponse = parseJsonResponse(
           rawResponse,
-          'topics',
+          "topics"
         ) as ContentResponse;
 
         if (!contentResponse || isNull(contentResponse.content)) {
@@ -147,22 +152,36 @@ export default function Body({
         }
 
         setBody(formatAiText(contentResponse.content));
-        setMessage({ type: 'success', content: 'Content generation completed!' });
+        setMessage({
+          type: "success",
+          content: "Content generation completed!",
+        });
       } catch (error) {
-        console.error('Error generating content:', error);
-        console.info('Raw response that caused error:', rawResponse);
-        toast.error('Failed to generate content. Please try again.');
+        console.error("Error generating content:", error);
+        console.info("Raw response that caused error:", rawResponse);
+        toast.error("Failed to generate content. Please try again.");
         resetState();
         return;
       }
     } catch (error) {
-      console.error('Generation error:', error);
-      toast.error('An error occurred during content generation');
+      console.error("Generation error:", error);
+      toast.error("An error occurred during content generation");
     } finally {
       setIsGenerating(false);
       setMessage(null);
     }
-  }, [title, model, wordsLength, unitCost, user, siteInfo, resetState, setBody, prompt, router]); // Added missing dependencies
+  }, [
+    title,
+    model,
+    wordsLength,
+    unitCost,
+    user,
+    siteInfo,
+    resetState,
+    setBody,
+    prompt,
+    router,
+  ]); // Added missing dependencies
   // Toggle handler with validation
   const handleStartGenerate = useCallback(() => {
     const newGenerateState = !generate;
@@ -173,12 +192,15 @@ export default function Body({
     }
   }, [generate, isGenerating, handleGenerate]);
 
-  let models: AiModelType[] = [];
+  let models: any[] = [];
 
   availableAiModels.forEach((model) => {
     models.push({
       ...model,
-      title: model?.title?.replace('{name}', (siteInfo.name ?? '').replace(' ', '-')),
+      title: model?.title?.replace(
+        "{name}",
+        (siteInfo.name ?? "").replace(" ", "-")
+      ),
     });
   });
   return (
@@ -188,31 +210,35 @@ export default function Body({
         topRightWidget={
           <ToggleSwitch
             className="text-xs"
-            name={''}
+            name={""}
             label=""
             onChange={(e) => {
-              if (bodyType !== 'plain') {
-                setBodyType('plain');
+              if (bodyType !== "plain") {
+                setBodyType("plain");
               } else {
-                setBodyType('');
+                setBodyType("");
               }
             }}
-            checked={bodyType === 'plain'}
+            checked={bodyType === "plain"}
           />
         }
         bottomWidget={
-          bodyType === 'plain' && (
+          bodyType === "plain" && (
             <div>
               <div className="flex flex-row justify-between items-center">
                 <div className="flex flex-row justify-between space-x-4 text-xs items-center">
                   <div className="font-normal text-xs">
-                    {isNull(body) ? 'Add with Ai' : 'Edit with Ai'}
+                    {isNull(body) ? "Add with Ai" : "Edit with Ai"}
                   </div>
                   <FaWandMagicSparkles size={20} />
                 </div>
-                <div className="text-xs">Units Balance: {formatNumber(user.ai_units ?? 0)}</div>
+                <div className="text-xs">
+                  Units Balance: {formatNumber(user.ai_units ?? 0)}
+                </div>
                 <div className="flex items-center gap-2">
-                  {isGenerating && <span className="text-xs text-blue-600">Generating...</span>}
+                  {isGenerating && (
+                    <span className="text-xs text-blue-600">Generating...</span>
+                  )}
                   <ToggleSwitch
                     className="text-xs flex flex-row justify-between"
                     name="ai-generate"
@@ -228,7 +254,7 @@ export default function Body({
                   <div className="flex flex-row space-x-1 h-full w-full items-center justify-between">
                     <div className="w-full h-full">
                       <SearchableSelect
-                        defaultValues={[model.id ?? '']}
+                        defaultValues={[model.id ?? ""]}
                         items={models as any}
                         onSelect={(v: any) => {
                           const md = models.find((m) => m.id === v);
@@ -250,9 +276,12 @@ export default function Body({
                         name="wordsLength"
                         defaultValue={wordsLength.toString()}
                         onBlur={(e) => {
-                          const wpt = Math.max(50, Math.min(1000, parseInt(e.target.value) || 50));
+                          const wpt = Math.max(
+                            50,
+                            Math.min(1000, parseInt(e.target.value) || 50)
+                          );
                           setwordsLength(wpt);
-                          setValue('wordsLength', wpt);
+                          setValue("wordsLength", wpt);
                         }}
                         disabled={isGenerating}
                       />
@@ -262,7 +291,9 @@ export default function Body({
                   {message ? (
                     <i
                       className={`text-xs flex justify-center items-center w-full ${
-                        message.type === 'success' ? 'text-blue-700' : 'text-red-700'
+                        message.type === "success"
+                          ? "text-blue-700"
+                          : "text-red-700"
                       } py-5`}
                     >
                       {message.content}
@@ -275,7 +306,8 @@ export default function Body({
                         disabled={isGenerating}
                         onClick={handleStartGenerate}
                       >
-                        Generate {capitalize(type)} @ {unitCost.toFixed(3)} units
+                        Generate {capitalize(type)} @ {unitCost.toFixed(3)}{" "}
+                        units
                       </CustomButton>
                     </div>
                   )}
@@ -285,11 +317,11 @@ export default function Body({
           )
         }
       >
-        {bodyType === 'plain' && (
+        {bodyType === "plain" && (
           <div className="relative w-full py-5 sm:py-10">
             {/* Body text with very low contrast */}
             <div className="w-full text-xs text-gray-400 opacity-50">
-              {truncateText(stripHtml(body ?? '<div></div>'))}
+              {truncateText(stripHtml(body ?? "<div></div>"))}
             </div>
 
             {/* Edit or Add button overlay */}
@@ -299,10 +331,16 @@ export default function Body({
                   onClick={() => setSidebarOpen(true)}
                   iconPosition="after"
                   icon={
-                    isNull(body) ? <FaPlus className="h-3 w-3" /> : <FaEdit className="h-3 w-3" />
+                    isNull(body) ? (
+                      <FaPlus className="h-3 w-3" />
+                    ) : (
+                      <FaEdit className="h-3 w-3" />
+                    )
                   }
                 >
-                  <div className="font-bold">{isNull(body) ? 'Add' : 'Edit'}</div>{' '}
+                  <div className="font-bold">
+                    {isNull(body) ? "Add" : "Edit"}
+                  </div>{" "}
                 </CustomButton>
               </div>
             </div>
@@ -312,7 +350,7 @@ export default function Body({
 
       {isSidebarOpen && (
         <ProductDetailsComponent
-          actionTitle={'Body'}
+          actionTitle={"Body"}
           isFull={true}
           isOpen={isSidebarOpen}
           onClose={() => setSidebarOpen(false)}

@@ -1,20 +1,24 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { ToggleSwitch } from '@/app/widgets/toggle_switch_button';
-import { toast } from 'sonner';
-import { clearCache, getOpenAIResponse } from '@/app/actions';
-import { capitalize } from '@/helpers/capitalize';
-import { formatNumber } from '@/helpers/formatNumber';
-import { isNull } from '@/helpers/isNull';
-import { randomNumber } from '@/helpers/randomNumber';
-import FormInput from '@/app/widgets/hook_form_input';
-import { SearchableSelect } from '@/app/widgets/searchable_select';
-import { api_credit_and_debit_ai_units, availableAiModels, BASE_AI_MODEL } from '@/src/constants';
-import { CustomButton } from '@/app/widgets/custom_button';
-import { modHeaders } from '@/helpers/modHeaders';
-import { Bot, Brain, MessageSquarePlus, Sparkle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { parseJsonResponse } from '@/app/utils/ai/ai_helpers';
-import { FaWandMagicSparkles } from 'react-icons/fa6';
+import React, { useState, useCallback, useEffect } from "react";
+import { ToggleSwitch } from "@/app/widgets/toggle_switch_button";
+import { toast } from "sonner";
+import { clearCache, getOpenAIResponse } from "@/app/actions";
+import { capitalize } from "@/helpers/capitalize";
+import { formatNumber } from "@/helpers/formatNumber";
+import { isNull } from "@/helpers/isNull";
+import { randomNumber } from "@/helpers/randomNumber";
+import FormInput from "@/app/widgets/hook_form_input";
+import { SearchableSelect } from "@/app/widgets/searchable_select";
+import {
+  api_credit_and_debit_ai_units,
+  availableAiModels,
+  BASE_AI_MODEL,
+} from "@/src/constants";
+import { CustomButton } from "@/app/widgets/custom_button";
+import { modHeaders } from "@/helpers/modHeaders";
+import { Bot, Brain, MessageSquarePlus, Sparkle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { parseJsonResponse } from "@/app/utils/ai/ai_helpers";
+import { FaWandMagicSparkles } from "react-icons/fa6";
 
 type AiGenerateProps = {
   data: string;
@@ -47,7 +51,7 @@ export default function AiGenerate({
   const [wordsPerTopic, setWordsPerTopic] = useState(150);
   const [unitCost, setUnitCost] = useState(0);
   const [message, setMessage] = useState<{
-    type: 'error' | 'success' | 'info';
+    type: "error" | "success" | "info";
     content: string;
   } | null>(null);
   const router = useRouter();
@@ -67,16 +71,18 @@ export default function AiGenerate({
   }, [wordsPerTopic, numTopics, model]);
 
   const handleGenerate = useCallback(async () => {
-    if (!title || title.trim() === '') {
-      toast.error('Please provide a title before generating content');
+    if (!title || title.trim() === "") {
+      toast.error("Please provide a title before generating content");
       resetState();
       return;
     }
 
     setIsGenerating(true);
-    setMessage({ type: 'success', content: 'Generating Content' });
+    setMessage({ type: "success", content: "Generating Content" });
     try {
-      const url = await api_credit_and_debit_ai_units({ subBase: siteInfo.slug });
+      const url = await api_credit_and_debit_ai_units({
+        subBase: siteInfo.slug,
+      });
       if (isNull(unitCost) || unitCost <= 0) {
         toast.error("Units can't be zero");
         setIsGenerating(false); // Added missing state reset
@@ -87,11 +93,11 @@ export default function AiGenerate({
       const body = {
         userId: user.id,
         unit: unitCost,
-        type: 'debit',
+        type: "debit",
       };
       const response = await fetch(url, {
-        method: 'POST',
-        headers: await modHeaders('post'),
+        method: "POST",
+        headers: await modHeaders("post"),
         body: JSON.stringify(body),
       });
 
@@ -103,12 +109,12 @@ export default function AiGenerate({
         setMessage(null);
         return;
       }
-      clearCache('user');
-      clearCache('users');
+      clearCache("user");
+      clearCache("users");
       router.refresh();
 
       switch (type) {
-        case 'topics': {
+        case "topics": {
           // Step 1: Generate the list of topics
           const topicsInstruction = `You're a typical Nigerian skilled blog content writer who creates HTML SEO friendly, engaging, well-researched topics that ranks better on search engines in a real human tone. Respond in valid JSON format with the following structure: {"topics": [{"title": "SEO-optimized title of the topic", "description": "SEO-optimized short description of the topic"}]}`;
 
@@ -118,9 +124,9 @@ export default function AiGenerate({
           try {
             // Ensure we're passing valid, non-null values to the API
             rawResponse = await getOpenAIResponse({
-              prompt: topicsPrompt || '',
-              model: model || BASE_AI_MODEL || '', // Added optional chaining
-              instruction: topicsInstruction || '',
+              prompt: topicsPrompt || "",
+              model: model || BASE_AI_MODEL || "", // Added optional chaining
+              instruction: topicsInstruction || "",
             });
 
             interface TopicsResponse {
@@ -133,7 +139,7 @@ export default function AiGenerate({
             // Parse and type-check the response
             const topicsResponse: TopicsResponse = parseJsonResponse(
               rawResponse,
-              'topics',
+              "topics"
             ) as TopicsResponse;
 
             if (!topicsResponse || !topicsResponse.topics) {
@@ -142,19 +148,24 @@ export default function AiGenerate({
 
             // Validate response structure
             if (!Array.isArray(topicsResponse.topics)) {
-              console.error('Invalid AI response format for topics', topicsResponse);
+              console.error(
+                "Invalid AI response format for topics",
+                topicsResponse
+              );
               throw new Error("AI response didn't contain valid topics array");
             }
 
             // Create topic objects with unique IDs
-            const topics: TopicType[] = topicsResponse.topics.map((topic, index) => ({
-              id: `topic_${randomNumber(10)}_${Math.random().toString(36).substring(2, 9)}`,
-              title: topic?.title || `Topic ${index + 1}`,
-              description: topic?.description || '',
-            }));
+            const topics: TopicType[] = topicsResponse.topics.map(
+              (topic, index) => ({
+                id: `topic_${randomNumber(10)}_${Math.random().toString(36).substring(2, 9)}`,
+                title: topic?.title || `Topic ${index + 1}`,
+                description: topic?.description || "",
+              })
+            );
 
             if (topics.length === 0) {
-              toast.error('No topics were generated. Please try again.');
+              toast.error("No topics were generated. Please try again.");
               resetState();
               return;
             }
@@ -162,7 +173,7 @@ export default function AiGenerate({
             // Update state with initial topics - using handleTopicUpdate to avoid duplicates
             setTopics(topics);
             setMessage({
-              type: 'success',
+              type: "success",
               content: `Generated ${topics.length} topics. Creating content...`,
             });
             // Step 2: Generate content for each topic in sequence
@@ -177,9 +188,9 @@ export default function AiGenerate({
                 let rawContentResponse;
                 try {
                   rawContentResponse = await getOpenAIResponse({
-                    prompt: contentPrompt || '',
-                    model: model || BASE_AI_MODEL || '', // Added optional chaining
-                    instruction: contentInstruction || '',
+                    prompt: contentPrompt || "",
+                    model: model || BASE_AI_MODEL || "", // Added optional chaining
+                    instruction: contentInstruction || "",
                   });
 
                   // Define an explicit interface for the expected content response
@@ -193,22 +204,29 @@ export default function AiGenerate({
                   // Parse and type-check the response
                   const contentResponse: ContentResponse = parseJsonResponse(
                     rawContentResponse,
-                    'content',
+                    "content"
                   ) as ContentResponse;
 
                   if (!contentResponse || !contentResponse.content) {
-                    throw new Error(`Failed to generate content for topic: ${topic.title}`);
+                    throw new Error(
+                      `Failed to generate content for topic: ${topic.title}`
+                    );
                   }
 
                   // Update the enhanced topics array with the generated content
                   enhancedTopics[i] = {
                     ...topic,
                     subTitle: contentResponse.content.title || topic.title,
-                    body: contentResponse.content.body ? contentResponse.content.body : topic.title,
+                    body: contentResponse.content.body
+                      ? contentResponse.content.body
+                      : topic.title,
                   };
                 } catch (contentError) {
-                  console.error(`Error getting content for topic "${topic.title}":`, contentError);
-                  console.info('Raw content response:', rawContentResponse);
+                  console.error(
+                    `Error getting content for topic "${topic.title}":`,
+                    contentError
+                  );
+                  console.info("Raw content response:", rawContentResponse);
 
                   // Don't halt the entire process, just mark this topic as failed
                   enhancedTopics[i] = {
@@ -217,7 +235,7 @@ export default function AiGenerate({
                     body: `<p>Content generation failed. Please try again later.</p>`,
                   };
                   setMessage({
-                    type: 'error',
+                    type: "error",
                     content: `Failed to generate content for "${topic.title}"`,
                   });
                 }
@@ -228,12 +246,15 @@ export default function AiGenerate({
                 // Notify progress
                 if ((i + 1) % 2 === 0 || i === topics.length - 1) {
                   setMessage({
-                    type: 'success',
+                    type: "success",
                     content: `Generated content for ${i + 1} of ${topics.length} topics`,
                   });
                 }
               } catch (topicError) {
-                console.error(`Error processing topic "${topic.title}":`, topicError);
+                console.error(
+                  `Error processing topic "${topic.title}":`,
+                  topicError
+                );
                 enhancedTopics[i] = {
                   ...topic,
                   subTitle: topic.title,
@@ -245,11 +266,14 @@ export default function AiGenerate({
 
             // Call completion handler with all enhanced topics
             onCompletion(enhancedTopics);
-            setMessage({ type: 'success', content: 'Content generation completed!' });
+            setMessage({
+              type: "success",
+              content: "Content generation completed!",
+            });
           } catch (error) {
-            console.error('Error generating topics:', error);
-            console.info('Raw response that caused error:', rawResponse);
-            toast.error('Failed to generate topics. Please try again.');
+            console.error("Error generating topics:", error);
+            console.info("Raw response that caused error:", rawResponse);
+            toast.error("Failed to generate topics. Please try again.");
             resetState();
             return;
           }
@@ -263,8 +287,8 @@ export default function AiGenerate({
           break;
       }
     } catch (error) {
-      console.error('Generation error:', error);
-      toast.error('An error occurred during content generation');
+      console.error("Generation error:", error);
+      toast.error("An error occurred during content generation");
     } finally {
       setIsGenerating(false);
       setMessage(null);
@@ -293,12 +317,15 @@ export default function AiGenerate({
     }
   }, [generate, isGenerating, handleGenerate]);
 
-  let models: AiModelType[] = [];
+  let models: any[] = [];
 
   availableAiModels.forEach((model) => {
     models.push({
       ...model,
-      title: model?.title?.replace('{name}', (siteInfo.name ?? '').replace(' ', '-')),
+      title: model?.title?.replace(
+        "{name}",
+        (siteInfo.name ?? "").replace(" ", "-")
+      ),
     });
   });
 
@@ -308,9 +335,13 @@ export default function AiGenerate({
         <div className="flex flex-row justify-between space-x-4 text-xs items-center">
           <div> {label}</div> <FaWandMagicSparkles size={20} />
         </div>
-        <div className="text-xs">Units Balance: {formatNumber(user.ai_units ?? 0)}</div>
+        <div className="text-xs">
+          Units Balance: {formatNumber(user.ai_units ?? 0)}
+        </div>
         <div className="flex items-center gap-2">
-          {isGenerating && <span className="text-xs text-blue-600">Generating...</span>}
+          {isGenerating && (
+            <span className="text-xs text-blue-600">Generating...</span>
+          )}
           <ToggleSwitch
             className="text-xs flex flex-row justify-between"
             name="ai-generate"
@@ -327,7 +358,7 @@ export default function AiGenerate({
           <div className="flex flex-row space-x-1 h-full w-full items-center justify-between">
             <div className="w-full h-full">
               <SearchableSelect
-                defaultValues={[model.id ?? '']}
+                defaultValues={[model.id ?? ""]}
                 items={models as any}
                 onSelect={(v: any) => {
                   const md = models.find((m) => m.id === v);
@@ -347,8 +378,11 @@ export default function AiGenerate({
                 name="numTopics"
                 value={numTopics.toString()}
                 onBlur={(e) => {
-                  const nt = Math.max(1, Math.min(50, parseInt(e.target.value) || 1));
-                  setValue('numTopics', nt);
+                  const nt = Math.max(
+                    1,
+                    Math.min(50, parseInt(e.target.value) || 1)
+                  );
+                  setValue("numTopics", nt);
                   setNumTopics(nt);
                 }}
                 disabled={isGenerating}
@@ -366,10 +400,13 @@ export default function AiGenerate({
                 name="wordsPerTopic"
                 defaultValue={wordsPerTopic.toString()}
                 onBlur={(e) => {
-                  const wpt = Math.max(50, Math.min(1000, parseInt(e.target.value) || 50));
+                  const wpt = Math.max(
+                    50,
+                    Math.min(1000, parseInt(e.target.value) || 50)
+                  );
 
                   setWordsPerTopic(wpt);
-                  setValue('wordsPerTopic', wpt);
+                  setValue("wordsPerTopic", wpt);
                 }}
                 disabled={isGenerating}
               />
@@ -379,7 +416,7 @@ export default function AiGenerate({
           {message ? (
             <i
               className={`text-xs flex justify-center items-center w-full ${
-                message.type === 'success' ? 'text-blue-700' : 'text-red-700'
+                message.type === "success" ? "text-blue-700" : "text-red-700"
               } py-5`}
             >
               {message.content}

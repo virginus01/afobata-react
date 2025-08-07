@@ -1,26 +1,26 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import FormInput from '@/app/widgets/hook_form_input';
-import { CustomButton } from '@/app/widgets/custom_button';
-import CustomCard from '@/app/widgets/custom_card';
-import { formatNumber } from '@/app/helpers/formatNumber';
-import { isNull } from '@/app/helpers/isNull';
-import { stripHtml } from '@/app/helpers/stripHtml';
-import { ToggleSwitch } from '@/app/widgets/toggle_switch_button';
-import { FaWandMagicSparkles } from 'react-icons/fa6';
-import { toast } from 'sonner';
-import { SearchableSelect } from '@/app/widgets/searchable_select';
-import { useRouter } from 'next/navigation';
-import { modHeaders } from '@/app/helpers/modHeaders';
-import { clearCache, getOpenAIResponse } from '@/app/actions';
-import { formatAiText, parseJsonResponse } from '@/app/utils/ai/ai_helpers';
-import { sanitizeHTML } from '@/app/helpers/html_helper';
+import React, { useCallback, useState, useEffect } from "react";
+import FormInput from "@/app/widgets/hook_form_input";
+import { CustomButton } from "@/app/widgets/custom_button";
+import CustomCard from "@/app/widgets/custom_card";
+import { formatNumber } from "@/app/helpers/formatNumber";
+import { isNull } from "@/app/helpers/isNull";
+import { stripHtml } from "@/app/helpers/stripHtml";
+import { ToggleSwitch } from "@/app/widgets/toggle_switch_button";
+import { FaWandMagicSparkles } from "react-icons/fa6";
+import { toast } from "sonner";
+import { SearchableSelect } from "@/app/widgets/searchable_select";
+import { useRouter } from "next/navigation";
+import { modHeaders } from "@/app/helpers/modHeaders";
+import { clearCache, getOpenAIResponse } from "@/app/actions";
+import { formatAiText, parseJsonResponse } from "@/app/utils/ai/ai_helpers";
+import { sanitizeHTML } from "@/app/helpers/html_helper";
 import {
   api_credit_and_debit_ai_units,
   availableAiModels,
   BASE_AI_MODEL,
-} from '@/app/src/constants';
-import slugify from 'slugify';
-import RichTextEditor from '@/app/widgets/rich_text_editor';
+} from "@/app/src/constants";
+import slugify from "slugify";
+import RichTextEditor from "@/app/widgets/rich_text_editor";
 
 const startCode = `<div class="relative grid min-h-screen grid-cols-[1fr_2.5rem_auto_2.5rem_1fr] grid-rows-[1fr_1px_auto_1px_1fr] bg-white [--pattern-fg:var(--color-gray-950)]/5 dark:bg-gray-950 dark:[--pattern-fg:var(--color-white)]/10">
   <div class="col-start-3 row-start-3 flex max-w-lg flex-col bg-gray-100 p-2 dark:bg-white/10">
@@ -90,7 +90,7 @@ const startCode = `<div class="relative grid min-h-screen grid-cols-[1fr_2.5rem_
 const CustomCodeWidget = ({
   siteInfo,
   brand,
-  initialCode = '',
+  initialCode = "",
   user = {},
   onSave,
 }: {
@@ -100,8 +100,8 @@ const CustomCodeWidget = ({
   initialCode?: string;
   onSave: (code: string, label: string) => void;
 }) => {
-  const [code, setCode] = useState(initialCode || '<div> </div>');
-  const [description, setDescription] = useState('');
+  const [code, setCode] = useState(initialCode || "<div> </div>");
+  const [description, setDescription] = useState("");
   const [widgetTitle, setWidgetTitle] = useState(``);
   const [loading, setLoading] = useState(false);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
@@ -109,9 +109,9 @@ const CustomCodeWidget = ({
   const [complexity, setComplexity] = useState(2);
   const [unitCost, setUnitCost] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [previewCode, setPreviewCode] = useState('');
+  const [previewCode, setPreviewCode] = useState("");
   const [message, setMessage] = useState<{
-    type: 'error' | 'success' | 'info';
+    type: "error" | "success" | "info";
     content: string;
   } | null>(null);
 
@@ -130,22 +130,28 @@ const CustomCodeWidget = ({
     setIsGenerating(false);
     setMessage(null);
   };
-  const widgetSlug = slugify(widgetTitle ?? '', { lower: true, trim: true, replacement: '_' });
+  const widgetSlug = slugify(widgetTitle ?? "", {
+    lower: true,
+    trim: true,
+    replacement: "_",
+  });
 
   // Generate code with AI
   const generateCodeWithAI = useCallback(async () => {
-    if (!description || description.trim() === '') {
-      toast.error('Please provide a widget description before generating');
+    if (!description || description.trim() === "") {
+      toast.error("Please provide a widget description before generating");
       resetState();
       return;
     }
 
     setIsGenerating(true);
-    setMessage({ type: 'info', content: 'Generating your custom code...' });
+    setMessage({ type: "info", content: "Generating your custom code..." });
 
     try {
       // Debit AI units
-      const url = await api_credit_and_debit_ai_units({ subBase: siteInfo.slug });
+      const url = await api_credit_and_debit_ai_units({
+        subBase: siteInfo.slug,
+      });
       if (isNull(unitCost) || unitCost <= 0) {
         toast.error("Units can't be zero");
         resetState();
@@ -155,12 +161,12 @@ const CustomCodeWidget = ({
       const body = {
         userId: user.id,
         unit: unitCost,
-        type: 'debit',
+        type: "debit",
       };
 
       const response = await fetch(url, {
-        method: 'POST',
-        headers: await modHeaders('post'),
+        method: "POST",
+        headers: await modHeaders("post"),
         body: JSON.stringify(body),
       });
 
@@ -172,8 +178,8 @@ const CustomCodeWidget = ({
         return;
       }
 
-      clearCache('user');
-      clearCache('users');
+      clearCache("user");
+      clearCache("users");
 
       // Generate the widget code with AI
       const codeInstruction = `You are a professional HTML, Tailwind CSS, and responsive website designer that creates custom code for section of website that very appealing to eyes. Create a valid, self-contained pure html, tailwindcss and inline css widget based on this description: "${description}".
@@ -194,7 +200,7 @@ const CustomCodeWidget = ({
       try {
         rawResponse = await getOpenAIResponse({
           prompt: `create an html and tailwind css code for '${description}' as a section of a page for the website ${siteInfo.name}`,
-          model: model || BASE_AI_MODEL || '',
+          model: model || BASE_AI_MODEL || "",
           instruction: codeInstruction,
         });
 
@@ -203,7 +209,10 @@ const CustomCodeWidget = ({
         }
 
         // Parse and validate the response
-        const codeResponse: CodeResponse = parseJsonResponse(rawResponse, 'code') as CodeResponse;
+        const codeResponse: CodeResponse = parseJsonResponse(
+          rawResponse,
+          "code"
+        ) as CodeResponse;
 
         if (!codeResponse || isNull(codeResponse.content)) {
           throw new Error(`Failed to parse AI response for widget`);
@@ -212,55 +221,70 @@ const CustomCodeWidget = ({
         const formattedCode = formatAiText(codeResponse.content);
         setCode(formattedCode);
         setPreviewCode(formattedCode);
-        setMessage({ type: 'success', content: 'Widget generated successfully!' });
+        setMessage({
+          type: "success",
+          content: "Widget generated successfully!",
+        });
       } catch (error) {
-        console.error('Error generating code:', error);
-        console.info('Raw response that caused error:', rawResponse);
-        toast.error('Failed to generate widget code. Please try again.');
+        console.error("Error generating code:", error);
+        console.info("Raw response that caused error:", rawResponse);
+        toast.error("Failed to generate widget code. Please try again.");
         resetState();
         return;
       }
     } catch (error) {
-      console.error('Generation error:', error);
-      toast.error('An error occurred during code generation');
+      console.error("Generation error:", error);
+      toast.error("An error occurred during code generation");
     } finally {
       setIsGenerating(false);
       setTimeout(() => setMessage(null), 3000);
     }
-  }, [description, complexity, model, unitCost, siteInfo, router, user.id, widgetSlug]);
+  }, [
+    description,
+    complexity,
+    model,
+    unitCost,
+    siteInfo,
+    router,
+    user.id,
+    widgetSlug,
+  ]);
 
   // Handle save button click
   const handleSave = () => {
-    if (!code || code.trim() === '') {
-      toast.warning('Please enter or generate some code first');
+    if (!code || code.trim() === "") {
+      toast.warning("Please enter or generate some code first");
       return;
     }
 
-    if (!widgetTitle || widgetTitle.trim() === '') {
-      toast.warning('Please enter a widget title');
+    if (!widgetTitle || widgetTitle.trim() === "") {
+      toast.warning("Please enter a widget title");
       return;
     }
 
     if (code.length > 5000) {
-      toast.error('The code is too large. Please simplify or split it');
+      toast.error("The code is too large. Please simplify or split it");
       return;
     }
 
     try {
       const sanitizedCode = sanitizeHTML(code);
       onSave(sanitizedCode, widgetTitle);
-      toast.success('Widget code saved successfully!');
+      toast.success("Widget code saved successfully!");
     } catch (error) {
-      toast.error('Failed to save code. Please check for errors');
+      toast.error("Failed to save code. Please check for errors");
     }
   };
 
   // Setup available AI models
-  let models: AiModelType[] = [];
+  let models: any[] = [];
   availableAiModels.forEach((model) => {
     models.push({
       ...model,
-      title: model?.title?.replace('{name}', (siteInfo.name ?? '').replace(' ', '-')),
+      title: model?.title?.replace(
+        "{name}",
+        (siteInfo.name ?? "").replace(" ", "-")
+      ),
     });
   });
 
@@ -274,13 +298,16 @@ const CustomCodeWidget = ({
               onClick={() => {
                 setCode(initialCode);
                 setPreviewCode(initialCode);
-                setDescription('');
-                toast.info('Changes discarded');
+                setDescription("");
+                toast.info("Changes discarded");
               }}
             >
               Reset
             </CustomButton>
-            <CustomButton onClick={handleSave} disabled={!code.trim() || isGenerating}>
+            <CustomButton
+              onClick={handleSave}
+              disabled={!code.trim() || isGenerating}
+            >
               Save Widget
             </CustomButton>
           </div>
@@ -292,7 +319,9 @@ const CustomCodeWidget = ({
                 <FaWandMagicSparkles size={16} />
                 <span className="text-sm font-medium">Generate with AI</span>
               </div>
-              <div className="text-xs">Units Balance: {formatNumber(user.ai_units ?? 0)}</div>
+              <div className="text-xs">
+                Units Balance: {formatNumber(user.ai_units ?? 0)}
+              </div>
               <ToggleSwitch
                 className="text-xs"
                 name="ai-generate-toggle"
@@ -322,7 +351,7 @@ const CustomCodeWidget = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <SearchableSelect
-                      defaultValues={[model.id ?? '']}
+                      defaultValues={[model.id ?? ""]}
                       items={models as any}
                       onSelect={(v: any) => {
                         const md = models.find((m) => m.id === v);
@@ -334,7 +363,9 @@ const CustomCodeWidget = ({
                   </div>
 
                   <div className="flex flex-row justify-center space-x-2 items-center w-full">
-                    <label className="text-xs font-medium">Complexity Level</label>
+                    <label className="text-xs font-medium">
+                      Complexity Level
+                    </label>
                     <div className="flex items-center space-x-2">
                       <input
                         type="range"
@@ -342,7 +373,9 @@ const CustomCodeWidget = ({
                         max="5"
                         step="1"
                         value={complexity}
-                        onChange={(e) => setComplexity(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          setComplexity(parseInt(e.target.value))
+                        }
                         className="w-full bg-amber-600"
                       />
                       <span className="text-sm">{complexity}/5</span>
@@ -353,11 +386,11 @@ const CustomCodeWidget = ({
                 {message ? (
                   <div
                     className={`text-sm flex justify-center items-center w-full py-3 ${
-                      message.type === 'success'
-                        ? 'text-green-700'
-                        : message.type === 'error'
-                          ? 'text-red-700'
-                          : 'text-blue-700'
+                      message.type === "success"
+                        ? "text-green-700"
+                        : message.type === "error"
+                          ? "text-red-700"
+                          : "text-blue-700"
                     }`}
                   >
                     {message.content}
@@ -394,7 +427,7 @@ const CustomCodeWidget = ({
             type="textarea"
             rows={10}
             name="code"
-            label={'your code or generate with AI'}
+            label={"your code or generate with AI"}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             onBlur={(e) => setPreviewCode(e.target.value)}
@@ -414,9 +447,13 @@ const CustomCodeWidget = ({
           {/* Preview Panel */}
           <div className="p-4 bg-gray-50 border rounded-md">
             {previewCode ? (
-              <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(previewCode) }}></div>
+              <div
+                dangerouslySetInnerHTML={{ __html: sanitizeHTML(previewCode) }}
+              ></div>
             ) : (
-              <div className="text-gray-400 text-center py-2">Preview will appear here</div>
+              <div className="text-gray-400 text-center py-2">
+                Preview will appear here
+              </div>
             )}
           </div>
         </div>
