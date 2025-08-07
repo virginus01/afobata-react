@@ -1,6 +1,12 @@
 {
   "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
+    "types": [],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "plugins": [
       {
         "name": "next"
@@ -47,7 +53,15 @@
     "**/*.tsx",
     "next-env.d.ts",
     "next.config.js",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "./dist/types/**/*.ts",
+    "out/types/**/*.ts",
+    "src",
+    "tailwind.config.ts",
+    "public/sw-pend.js",
+    "public/images/*",
+    "www/types/**/*.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules"
