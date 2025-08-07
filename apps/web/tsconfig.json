@@ -1,5 +1,5 @@
 {
-  //"extends": "@repo/typescript-config/nextjs.json",
+  "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
     "types": [],
     "lib": [
@@ -7,16 +7,14 @@
       "dom.iterable",
       "esnext"
     ],
-    "noImplicitAny": true, // Flags variables with an implicit 'any' type
-    "strictNullChecks": true, // Ensures null and undefined are handled explicitly
+    "noImplicitAny": true,
+    "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
