@@ -3,14 +3,14 @@
   "remoteName": "origin",
   "projects": [
     {
-      "id": "prj_qzc4TAydE7G3AYASdwPQZeURTqYA",
-      "name": "my-turborepo-docs",
-      "directory": "apps\\docs"
-    },
-    {
       "id": "prj_zVt06ANRiOd0cOVocKzBc5grewZp",
       "name": "my-turborepo-web",
       "directory": "apps\\web"
+    },
+    {
+      "id": "prj_qzc4TAydE7G3AYASdwPQZeURTqYA",
+      "name": "my-turborepo-docs",
+      "directory": "apps\\docs"
     }
   ]
 }
