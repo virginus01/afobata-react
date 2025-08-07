@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 
-export default async function GET(req: NextApiRequest, res: NextApiResponse) {
+export async function GET(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { src, width, height, format = "webp" } = req.query;
 
@@ -20,7 +20,8 @@ export default async function GET(req: NextApiRequest, res: NextApiResponse) {
     } else {
       // 🔹 Fetch from local /public/ directory
       const filePath = path.join(process.cwd(), "public", src as string);
-      if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Image not found" });
+      if (!fs.existsSync(filePath))
+        return res.status(404).json({ error: "Image not found" });
       imageBuffer = fs.readFileSync(filePath);
     }
 
