@@ -1,7 +1,8 @@
 {
   "extends": "next/core-web-vitals",
   "rules": {
-    "react/display-name": "off"
+    "react/display-name": "off",
+    "@typescript-eslint/no-unused-vars": "warn"
     // Add other rules as needed
   }
 }
