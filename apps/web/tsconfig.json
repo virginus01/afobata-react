@@ -5,7 +5,42 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@/database/*": [
+        "./app/api/database/*"
+      ],
+      "@/api/*": [
+        "./app/api/*"
+      ],
+      "@/api/tenant/*": [
+        "./app/api/[tenant]/*"
+      ],
+      "@/helpers/*": [
+        "./app/helpers/*"
+      ],
+      "@/dashboard/*": [
+        "./app/dashboard/*"
+      ],
+      "@/models/*": [
+        "./app/models/*"
+      ],
+      "@/views/*": [
+        "./app/views/*"
+      ],
+      "@/src/*": [
+        "./app/src/*"
+      ],
+      "@/actions/*": [
+        "./app/actions/*"
+      ],
+      "@/controller/*": [
+        "./app/controller/*"
+      ]
+    }
   },
   "include": [
     "**/*.ts",

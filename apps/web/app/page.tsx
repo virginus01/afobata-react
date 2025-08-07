@@ -1,7 +1,8 @@
 import Image, { type ImageProps } from "next/image";
 import { Button } from "@repo/ui/button";
 import styles from "./page.module.css";
-import Testing from "./testing";
+import Testing from "@/app/testing";
+import AnotherTesting from "@/dashboard/another-sample";
 
 type Props = Omit<ImageProps, "src"> & {
   srcLight: string;
@@ -24,6 +25,7 @@ export default function Home() {
     <div className={styles.page}>
       <main>
         <Testing />
+        <AnotherTesting />
       </main>
       <footer className={styles.footer}>
         <a
