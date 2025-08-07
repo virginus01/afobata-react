@@ -1,14 +1,14 @@
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { s3Client } from '@/app/utils/aws';
-import slugify from 'slugify';
-import sharp from 'sharp'; // 🔹 Import Sharp for image optimization
-import { cleanFileName } from '@/app/helpers/cleanFileName';
-import { isNull } from '@/app/helpers/isNull';
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { s3Client } from "@/app/utils/aws";
+import slugify from "slugify";
+import sharp from "sharp"; // 🔹 Import Sharp for image optimization
+import { cleanFileName } from "@/app/helpers/cleanFileName";
+import { isNull } from "@/app/helpers/isNull";
 
-import { api_response } from '@/app/helpers/api_response';
-import { invalid_response } from '@/app/helpers/invalid_response';
+import { api_response } from "@/app/helpers/api_response";
+import { invalid_response } from "@/app/helpers/invalid_response";
 
-import { bulkUpsert } from '@/database/mongodb';
+import { bulkUpsert } from "@/database/mongodb";
 
 // Configuration
 const MAX_RETRIES = 3;
@@ -22,19 +22,19 @@ async function optimizeImage(file: Buffer, mimeType: string) {
   try {
     let sharpImage = sharp(file).rotate();
 
-    if (mimeType.includes('image/')) {
+    if (mimeType.includes("image/")) {
       // Resize image to max 1200px width while maintaining aspect ratio
       sharpImage = sharpImage.resize({ width: 1200, withoutEnlargement: true });
 
       // Convert to WebP if possible
-      if (!mimeType.includes('gif')) {
-        sharpImage = sharpImage.toFormat('webp', { quality: 80 });
+      if (!mimeType.includes("gif")) {
+        sharpImage = sharpImage.toFormat("webp", { quality: 80 });
       }
     }
 
     return await sharpImage.toBuffer();
   } catch (error) {
-    console.error('Image optimization failed:', error);
+    console.error("Image optimization failed:", error);
     return file; // Return original file if optimization fails
   }
 }
@@ -44,7 +44,7 @@ async function processBatch(
   files: File[],
   siteInfo: BrandType,
   user: UserTypes,
-  bucketName: string,
+  bucketName: string
 ) {
   const results = [];
   const fileData: FileType[] = [];
@@ -53,30 +53,30 @@ async function processBatch(
     const batch = files.slice(i, i + CONCURRENT_UPLOADS);
     const uploadPromises = batch.map(async (file) => {
       try {
-        let buffer = Buffer.from(await file.arrayBuffer());
+        let buffer: any = Buffer.from(await file.arrayBuffer());
 
         // 🔹 Optimize Image
         buffer = await optimizeImage(buffer, file.type);
 
         const slug = slugify(file.name, { lower: true, trim: true });
-        const filePath = `${siteInfo.id}/${user?.id ?? 'all'}/${slug}.webp`;
+        const filePath = `${siteInfo.id}/${user?.id ?? "all"}/${slug}.webp`;
 
         const fileName = await uploadFileToS3(
           buffer,
           filePath,
-          'image/webp', // 🔹 Store as WebP
-          bucketName,
+          "image/webp", // 🔹 Store as WebP
+          bucketName
         );
 
         if (fileName) {
           fileData.push({
             title: cleanFileName(file.name),
             slug: slugify(filePath, { lower: true, trim: true }),
-            provider: 'AWS-S3',
+            provider: "AWS-S3",
             brandId: siteInfo.id,
             userId: user.id,
             path: filePath,
-            type: 'image/webp',
+            type: "image/webp",
             size: buffer.length,
           });
           return { success: true, path: fileName };
@@ -102,12 +102,12 @@ async function processBatch(
 
 export async function uploadToAws(formData: any, siteInfo: BrandType) {
   try {
-    const files = formData.getAll('file');
-    let userData = formData.get('user');
+    const files = formData.getAll("file");
+    let userData = formData.get("user");
     let user: UserTypes = {};
 
     if (!files || files.length === 0) {
-      return invalid_response('file is required', 400);
+      return invalid_response("file is required", 400);
     }
 
     if (userData) {
@@ -115,32 +115,47 @@ export async function uploadToAws(formData: any, siteInfo: BrandType) {
     }
 
     if (isNull(user)) {
-      return invalid_response('User Data needed', 400);
+      return invalid_response("User Data needed", 400);
     }
 
     const bucketName = process.env.NEXT_PUBLIC_AWS_BUCKET;
     if (!bucketName) {
-      return invalid_response('AWS bucket not configured', 500);
+      return invalid_response("AWS bucket not configured", 500);
     }
 
-    const { results, fileData } = await processBatch(files, siteInfo, user, bucketName);
+    const { results, fileData } = await processBatch(
+      files,
+      siteInfo,
+      user,
+      bucketName
+    );
 
-    const successfulUploads = results.filter((r) => r.success).map((r) => r.path);
+    const successfulUploads = results
+      .filter((r) => r.success)
+      .map((r) => r.path);
     const errors = results.filter((r) => !r.success).map((r) => r.error);
 
     if (successfulUploads.length === 0) {
-      return invalid_response(`Failed to upload all files. Errors: ${errors.join('; ')}`, 500);
+      return invalid_response(
+        `Failed to upload all files. Errors: ${errors.join("; ")}`,
+        500
+      );
     }
 
     if (fileData.length > 0) {
-      await bulkUpsert(fileData, 'files');
+      await bulkUpsert(fileData, "files");
     }
 
     return api_response({
       success: true,
-      data: successfulUploads.length === 1 ? successfulUploads[0] : successfulUploads,
+      data:
+        successfulUploads.length === 1
+          ? successfulUploads[0]
+          : successfulUploads,
       msg:
-        errors.length > 0 ? `Partial success. Some files failed: ${errors.join('; ')}` : 'success',
+        errors.length > 0
+          ? `Partial success. Some files failed: ${errors.join("; ")}`
+          : "success",
     });
   } catch (error: any) {
     console.error(`Error uploading file(s): ${error.stack || error}`);
@@ -152,7 +167,7 @@ export async function uploadFileToS3(
   file: Buffer,
   filePath: string,
   type: string,
-  bucketName: string,
+  bucketName: string
 ): Promise<string | null> {
   let attempts = 0;
 
@@ -167,7 +182,7 @@ export async function uploadFileToS3(
 
       const command = new PutObjectCommand(params);
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Upload timeout')), UPLOAD_TIMEOUT);
+        setTimeout(() => reject(new Error("Upload timeout")), UPLOAD_TIMEOUT);
       });
 
       await Promise.race([s3Client.send(command), timeoutPromise]);
@@ -175,7 +190,10 @@ export async function uploadFileToS3(
       return filePath;
     } catch (error: any) {
       attempts++;
-      console.error(`Attempt ${attempts} failed for ${filePath}:`, error.message || error);
+      console.error(
+        `Attempt ${attempts} failed for ${filePath}:`,
+        error.message || error
+      );
 
       if (attempts === MAX_RETRIES) {
         console.error(`All retry attempts failed for ${filePath}`);
