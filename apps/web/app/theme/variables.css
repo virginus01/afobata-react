@@ -1,0 +1,21 @@
+:root {
+    --ion-color-primary: #F3F4F6;
+    --ion-color-primary-rgb: 243, 244, 246;
+    --ion-color-primary-contrast: #000000;
+    --ion-color-primary-contrast-rgb: 0, 0, 0;
+    --ion-color-primary-shade: #d6d7d8;
+    --ion-color-primary-tint: #f4f5f7;
+  
+    --ion-toolbar-background: #F3F4F6;
+    --ion-toolbar-color: #000000;
+    --ion-background-color: #F3F4F6;
+  }
+  
+  /* Platform-specific styles */
+  .ios {
+    --ion-statusbar-padding: 20px;
+  }
+  
+  .md {
+    --ion-statusbar-padding: 0;
+  }

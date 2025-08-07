@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Afobata</string>
+    <string name="title_activity_main">Afobata</string>
+    <string name="package_name">com.afobata.app</string>
+    <string name="custom_url_scheme">com.afobata.app</string>
+</resources>

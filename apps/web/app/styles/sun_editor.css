@@ -1,0 +1,32 @@
+.sun-editor .se-btn.se-tooltip {
+  padding: 2px 4px !important;  /* Adjust padding */
+  min-width: auto !important;
+  width: auto !important;
+  height: 20px !important; /* Adjust button height */
+  line-height: normal !important;
+  display: flex;  /* Ensure text and SVG align properly */
+  align-items: center;
+  gap: 4px; /* Space between text and icon */
+}
+
+/* Default (small screens) */
+.sun-editor .se-btn.se-tooltip svg {
+  width: 11px !important;
+  height: 11px !important;
+}
+
+/* Medium screens (min-width: 640px) */
+@media (min-width: 640px) {
+  .sun-editor .se-btn.se-tooltip svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+}
+
+/* Large screens (min-width: 1024px) */
+@media (min-width: 1024px) {
+  .sun-editor .se-btn.se-tooltip svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}

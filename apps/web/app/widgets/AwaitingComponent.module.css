@@ -1,0 +1,27 @@
+/* AwaitingComponent.module.css */
+
+/* Mobile default styles */
+.wrapper {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 1fr; /* Mobile: Stack vertically */
+}
+
+.border-top {
+  width: 0;
+  height: 0;
+  border-top: 100vh solid #f5f6f8; /* Default solid border */
+  border-right: 200px solid transparent;
+}
+
+@media screen and (max-width: 767px) {
+  .border-top {
+    display: none; /* Hide on mobile */
+  }
+}
+
+@media screen and (min-width: 768px) {
+  .wrapper {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); /* Larger screens: Side-by-side */
+  }
+}
