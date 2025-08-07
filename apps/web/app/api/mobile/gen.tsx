@@ -95,7 +95,7 @@ const getGitHubClient = () => {
 // Helper to convert hex color to RGB
 const hexToRgb = (hex: any): { r: number; g: number; b: number } => {
   // Remove # if present
-  hex = hex.replace(/^#/, ''); ////
+  hex = hex.replace(/^#/, ''); // test
 
   // Parse hex
   let r, g, b;
