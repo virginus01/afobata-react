@@ -1,30 +1,36 @@
-import { useDynamicContext } from '@/app/contexts/dynamic_context';
-import { curFormat } from '@/app/helpers/curFormat';
-import { isNull } from '@/app/helpers/isNull';
-import { readableDate } from '@/app/helpers/readableDate';
-import { uppercase } from '@/app/helpers/uppercase';
-import { Brand } from '@/app/models/Brand';
-import Invoice from '@/app/receipt/page';
-import CustomDrawer from '@/app/src/custom_drawer';
-import IconButton from '@/app/widgets/icon_button';
-import ListView from '@/app/widgets/listView';
-import FilterSortSearchBar from '@/app/widgets/searchFilterAndSort';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpRight } from 'lucide-react';
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { useDynamicContext } from "@/app/contexts/dynamic_context";
+import { curFormat } from "@/app/helpers/curFormat";
+import { isNull } from "@/app/helpers/isNull";
+import { readableDate } from "@/app/helpers/readableDate";
+import { uppercase } from "@/app/helpers/uppercase";
+import { Brand } from "@/app/models/Brand";
+import Invoice from "@/app/receipt/receipt";
+import CustomDrawer from "@/app/src/custom_drawer";
+import IconButton from "@/app/widgets/icon_button";
+import ListView from "@/app/widgets/listView";
+import FilterSortSearchBar from "@/app/widgets/searchFilterAndSort";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ArrowUpRight } from "lucide-react";
+import React, { useCallback, useLayoutEffect, useState } from "react";
 
 export default function InvoiceOverview({
   siteInfo,
   user,
   params,
   limit = 50,
-  display = 'table',
+  display = "table",
 }: {
   user: UserTypes;
   siteInfo: Brand;
   params: any;
   limit?: number;
-  display?: 'table' | 'chart' | 'widget';
+  display?: "table" | "chart" | "widget";
 }) {
   const [finalData, setFinalData] = useState<PaymentType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,18 +42,22 @@ export default function InvoiceOverview({
   }>({} as any);
 
   const { fetchData, refreshKey } = useDynamicContext();
-  let tag: string = `${user?.selectedProfile ?? ''}_${siteInfo?.id}_invoice`;
+  let tag: string = `${user?.selectedProfile ?? ""}_${siteInfo?.id}_invoice`;
 
   useLayoutEffect(() => {
     const getData = async () => {
       try {
         const result: any = await fetchData({
-          table: 'payments',
+          table: "payments",
           tag,
-          conditions: { userId: user.id, createdFrom: siteInfo.id, trnxType: 'purchase' },
+          conditions: {
+            userId: user.id,
+            createdFrom: siteInfo.id,
+            trnxType: "purchase",
+          },
           limit,
           sortOptions: {},
-          brandSlug: siteInfo.slug ?? '',
+          brandSlug: siteInfo.slug ?? "",
         });
 
         if (!isNull(result)) {
@@ -55,12 +65,12 @@ export default function InvoiceOverview({
             result.map((item: PaymentType) => ({
               ...item,
               price: item.amount,
-              action: 'add',
+              action: "add",
               title: `Invoice of ${curFormat(
                 item.amount,
-                item.currencySymbol || item.currency || '',
+                item.currencySymbol || item.currency || ""
               )}`,
-            })),
+            }))
           );
         }
       } catch (error) {
@@ -76,8 +86,8 @@ export default function InvoiceOverview({
   const handleSearch = useCallback((searchValue: string) => {
     const newConditions = {
       $or: [
-        { title: { $regex: searchValue, $options: 'i' } },
-        { id: { $regex: searchValue, $options: 'i' } },
+        { title: { $regex: searchValue, $options: "i" } },
+        { id: { $regex: searchValue, $options: "i" } },
       ],
     };
     // setFilter(newConditions);
@@ -86,13 +96,13 @@ export default function InvoiceOverview({
 
   return (
     <div>
-      {display === 'table' && (
+      {display === "table" && (
         <>
           <FilterSortSearchBar
             originalData={finalData as any}
             setData={setFinalData}
-            searchableKeys={['title', 'description']}
-            sortableKeys={['price', 'views', 'sales']}
+            searchableKeys={["title", "description"]}
+            sortableKeys={["price", "views", "sales"]}
             placeholder="Search title or description"
             onSearch={() => {}}
           />
@@ -100,7 +110,7 @@ export default function InvoiceOverview({
             data={finalData}
             setActiveData={(data) => {
               setReceiptData({
-                referenceId: data.referenceId ?? '',
+                referenceId: data.referenceId ?? "",
                 invoice: data as any,
                 orders: [] as any,
                 siteInfo: siteInfo as any,
@@ -110,7 +120,7 @@ export default function InvoiceOverview({
           />
         </>
       )}
-      {display === 'widget' && (
+      {display === "widget" && (
         <Card className="brand-bg-card brand-text-card xl:col-span-2 border border-none">
           <CardHeader className="flex flex-row items-center inset-0 p-0">
             <div className="grid gap-2 p-2">
@@ -148,7 +158,7 @@ export default function InvoiceOverview({
                 <div
                   onClick={() => {
                     setReceiptData({
-                      referenceId: trnx.referenceId ?? '',
+                      referenceId: trnx.referenceId ?? "",
                       invoice: trnx as any,
                       orders: [] as any,
                       siteInfo: siteInfo as any,
@@ -167,7 +177,7 @@ export default function InvoiceOverview({
                     <div className="ml-4 text-xs">
                       {curFormat(
                         trnx.amount || 0,
-                        uppercase(trnx.currencySymbol || trnx.currency || ''),
+                        uppercase(trnx.currencySymbol || trnx.currency || "")
                       )}
                     </div>
                   </div>
@@ -185,7 +195,7 @@ export default function InvoiceOverview({
           onClose={() => {
             setReceiptData({} as any);
           }}
-          header={'Receipt'}
+          header={"Receipt"}
           isHeightFull={true}
           isWidthFull={false}
         >

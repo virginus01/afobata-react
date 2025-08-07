@@ -1,34 +1,39 @@
-import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import { useCart } from '@/app/contexts/cart_context';
-import { CustomButton } from '@/app/widgets/widgets';
-import { api_create_order } from '@/app/src/constants';
-import CheckoutDetailsInfo from '@/app/src/checkout_details_info';
-import Checkout from '@/app/widgets/checkout';
-import { toast } from 'sonner';
-import Link from 'next/link';
-import { useBaseContext } from '@/app/contexts/base_context';
-import CustomCard from '@/app/widgets/custom_card';
-import { CreditCard, PackageCheck, Receipt, Zap } from 'lucide-react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as Yup from 'yup';
-import PaymentOptions from '@/src/cart/payment_options';
-import CustomDrawer from '@/src/custom_drawer';
-import Invoice from '@/app/receipt/page';
-import RewardMilleDisplay from '@/app/widgets/rewards';
-import { clearCache } from '@/app/actions';
-import { dummydata } from '@/app/dashboard/ttx';
-import { isNull } from '@/helpers/isNull';
-import { modHeaders } from '@/helpers/modHeaders';
-import { curFormat } from '@/helpers/curFormat';
-import { getParents } from '@/helpers/getParents';
-import { random_code } from '@/helpers/random_code';
-import { getAuthSessionData } from '@/app/controller/auth_controller';
-import { useDynamicContext } from '@/app/contexts/dynamic_context';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
+import { useCart } from "@/app/contexts/cart_context";
+import { CustomButton } from "@/app/widgets/widgets";
+import { api_create_order } from "@/app/src/constants";
+import CheckoutDetailsInfo from "@/app/src/checkout_details_info";
+import Checkout from "@/app/widgets/checkout";
+import { toast } from "sonner";
+import Link from "next/link";
+import { useBaseContext } from "@/app/contexts/base_context";
+import CustomCard from "@/app/widgets/custom_card";
+import { CreditCard, PackageCheck, Receipt, Zap } from "lucide-react";
+import { FormProvider, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as Yup from "yup";
+import PaymentOptions from "@/src/cart/payment_options";
+import CustomDrawer from "@/src/custom_drawer";
+import Invoice from "@/app/receipt/receipt";
+import RewardMilleDisplay from "@/app/widgets/rewards";
+import { clearCache } from "@/app/actions";
+import { dummydata } from "@/app/dashboard/ttx";
+import { isNull } from "@/helpers/isNull";
+import { modHeaders } from "@/helpers/modHeaders";
+import { curFormat } from "@/helpers/curFormat";
+import { getParents } from "@/helpers/getParents";
+import { random_code } from "@/helpers/random_code";
+import { getAuthSessionData } from "@/app/controller/auth_controller";
+import { useDynamicContext } from "@/app/contexts/dynamic_context";
 
 const validationSchema = Yup.object({
-  name: Yup.string().required('Name is required'),
-  email: Yup.string().required('Email is required'),
+  name: Yup.string().required("Name is required"),
+  email: Yup.string().required("Email is required"),
 });
 
 const CartDetails: React.FC<{
@@ -46,7 +51,7 @@ const CartDetails: React.FC<{
     invoice: CheckOutDataType;
     orders: OrderType;
     siteInfo: BrandType;
-    defaultView: 'receipt' | 'products';
+    defaultView: "receipt" | "products";
   }>({} as any);
 
   const [referenceId, setReferenceId] = useState(`${random_code(10)}`);
@@ -63,18 +68,20 @@ const CartDetails: React.FC<{
     setCart,
     setCompleted,
   } = useCart();
-  const [paymentOption, setPaymentOption] = useState<PaymentOptionsType>({} as any);
+  const [paymentOption, setPaymentOption] = useState<PaymentOptionsType>(
+    {} as any
+  );
   const { refreshPage } = useDynamicContext();
 
   let info: any[] = [];
-  const name = `${auth?.firstName ?? ''} ${auth?.lastName ?? ''}` || '';
+  const name = `${auth?.firstName ?? ""} ${auth?.lastName ?? ""}` || "";
 
   const handleRefresh = useCallback(() => {
-    refreshPage(['user', 'users', 'brand', 'brands'], true);
-    toast.success('Page refreshed successfully');
+    refreshPage(["user", "users", "brand", "brands"], true);
+    toast.success("Page refreshed successfully");
   }, [refreshPage]);
 
-  const handleOpenReceipt = (defaultView: 'receipt' | 'products') => {
+  const handleOpenReceipt = (defaultView: "receipt" | "products") => {
     setReceiptData({ ...receiptData, defaultView });
     setOpenReceipt(true);
   };
@@ -84,7 +91,7 @@ const CartDetails: React.FC<{
     resolver: yupResolver(validationSchema),
     defaultValues: {
       name,
-      email: auth?.email || '',
+      email: auth?.email || "",
     },
   });
 
@@ -115,7 +122,7 @@ const CartDetails: React.FC<{
       const { parent, master } = await getParents({ subBase: siteInfo.slug });
 
       if (isNull(parent) || isNull(master)) {
-        throw Error('An error occurred getting global parents');
+        throw Error("An error occurred getting global parents");
       }
 
       // Add site owner's currency
@@ -138,7 +145,9 @@ const CartDetails: React.FC<{
         if (c.currency) updatedRates[c.currency] = rates[c.currency];
 
         try {
-          const { parent, master } = await getParents({ subBase: c.parentBrandId });
+          const { parent, master } = await getParents({
+            subBase: c.parentBrandId,
+          });
 
           if (isNull(parent) || isNull(master)) {
             throw Error(`An error occurred getting parents for ${c.id}`);
@@ -147,8 +156,10 @@ const CartDetails: React.FC<{
           const masterCurrency = extractCurrency(master);
           const parentCurrency = extractCurrency(parent);
 
-          if (masterCurrency) updatedRates[masterCurrency] = rates[masterCurrency];
-          if (parentCurrency) updatedRates[parentCurrency] = rates[parentCurrency];
+          if (masterCurrency)
+            updatedRates[masterCurrency] = rates[masterCurrency];
+          if (parentCurrency)
+            updatedRates[parentCurrency] = rates[parentCurrency];
         } catch (error) {
           console.error(`Error fetching parents for ${c.id}:`, error);
           throw Error(`Error fetching parents for ${c.id}`);
@@ -183,9 +194,9 @@ const CartDetails: React.FC<{
     try {
       const orderData: CheckOutDataType = {
         userId: auth?.userId,
-        email: values.email ?? auth.email ?? '',
-        name: values?.name ?? auth?.firstName ?? '',
-        walletId: '',
+        email: values.email ?? auth.email ?? "",
+        name: values?.name ?? auth?.firstName ?? "",
+        walletId: "",
         cart: cart,
         subTotal: subTotal ?? 0,
         referenceId,
@@ -196,21 +207,21 @@ const CartDetails: React.FC<{
       };
 
       if (isNull(paymentOption.sp)) {
-        toast.error('select payment method');
+        toast.error("select payment method");
         return;
       }
 
       setIsProcessing(true);
 
-      if (!isOnline || paymentOption.sp === 'cash') {
-        if (paymentOption.sp === 'cash') {
-          toast.success('payment successfull via cash');
+      if (!isOnline || paymentOption.sp === "cash") {
+        if (paymentOption.sp === "cash") {
+          toast.success("payment successfull via cash");
           setReceiptData({
             siteInfo,
             invoice: orderData,
             orders: cart as OrderType,
             referenceId,
-            defaultView: 'receipt',
+            defaultView: "receipt",
           });
           setOpenReceipt(true);
           return;
@@ -224,24 +235,24 @@ const CartDetails: React.FC<{
 
       const formData = {
         ...orderData,
-        status: 'pending',
+        status: "pending",
       };
 
       const response = await fetch(url, {
-        method: 'POST',
-        headers: await modHeaders('post'),
+        method: "POST",
+        headers: await modHeaders("post"),
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        console.error('Error posting order');
+        console.error("Error posting order");
         return;
       }
 
       const { data, msg, status, code } = await response.json();
 
       if (status) {
-        if (code === 'paid') {
+        if (code === "paid") {
           const orderData = data;
           toast.success(msg);
           setReceiptData({
@@ -249,14 +260,14 @@ const CartDetails: React.FC<{
             invoice: orderData.invoice,
             orders: orderData.orders,
             siteInfo,
-            defaultView: 'receipt',
+            defaultView: "receipt",
           });
 
           setOpenReceipt(true);
           setCompleted(true);
           return;
-        } else if (paymentOption.sp === 'wallet') {
-          toast.error('insufficient balance');
+        } else if (paymentOption.sp === "wallet") {
+          toast.error("insufficient balance");
           return;
         } else {
           orderData;
@@ -273,7 +284,7 @@ const CartDetails: React.FC<{
         return;
       }
     } catch (error) {
-      console.error('error creating order', error);
+      console.error("error creating order", error);
     } finally {
       setIsProcessing(false);
     }
@@ -281,7 +292,10 @@ const CartDetails: React.FC<{
 
   useEffect(() => {
     const calculateSubtotal = () => {
-      const total = cart.reduce((sum, item) => sum + item.amount * item.quantity, 0);
+      const total = cart.reduce(
+        (sum, item) => sum + item.amount * item.quantity,
+        0
+      );
       setSubTotal(total);
     };
 
@@ -289,11 +303,11 @@ const CartDetails: React.FC<{
   }, [cart]);
 
   if (isNull(name)) {
-    info.push({ name: 'name', label: 'Name', type: 'text' });
+    info.push({ name: "name", label: "Name", type: "text" });
   }
 
   if (isNull(auth.email)) {
-    info.push({ name: 'email', label: 'Email', type: 'email' });
+    info.push({ name: "email", label: "Email", type: "email" });
   }
 
   const handleProceedClick = async () => {
@@ -310,7 +324,9 @@ const CartDetails: React.FC<{
     <>
       <div className="w-full">
         {cart.length === 0 ? (
-          <p className="flex font-bold justify-center my-20">Your cart is empty</p>
+          <p className="flex font-bold justify-center my-20">
+            Your cart is empty
+          </p>
         ) : isNull(siteInfo) ? (
           <p className="flex font-bold justify-center my-20">Brand is empty</p>
         ) : (
@@ -328,18 +344,24 @@ const CartDetails: React.FC<{
                             className="border-b border-gray-300 flex flex-col space-y-4 p-2"
                           >
                             <div className="text-xs font-semibold whitespace-nowrap truncate">
-                              <Link href={item.slug || '#'}>{item.title}</Link>
+                              <Link href={item.slug || "#"}>{item.title}</Link>
                             </div>
                             <div className="flex flex-row w-full justify-between py-2">
                               <p className="font-normal">
                                 {item.amount === 0
-                                  ? 'Free'
-                                  : curFormat(item.amount, item.orderCurrencySymbol)}
+                                  ? "Free"
+                                  : curFormat(
+                                      item.amount,
+                                      item.orderCurrencySymbol
+                                    )}
                               </p>
                               <div className="flex items-center space-x-4">
                                 <CustomButton
                                   className="w-6 h-6"
-                                  disabled={item.quantity === 1 || item.type !== 'physical'}
+                                  disabled={
+                                    item.quantity === 1 ||
+                                    item.type !== "physical"
+                                  }
                                   onClick={() => decreaseQuantity(item.id!)}
                                 >
                                   -
@@ -348,7 +370,7 @@ const CartDetails: React.FC<{
                                 <CustomButton
                                   className="w-6 h-6"
                                   onClick={() => increaseQuantity(item.id!)}
-                                  disabled={item.type !== 'physical'}
+                                  disabled={item.type !== "physical"}
                                 >
                                   +
                                 </CustomButton>
@@ -395,8 +417,8 @@ const CartDetails: React.FC<{
                     <CustomCard title="Checkout">
                       {orderCurrencies.length > 1 ? (
                         <div className="text-sm text-red-500 px-2">
-                          You cannot have a cart with more than one currency. Remove some items to
-                          proceed.
+                          You cannot have a cart with more than one currency.
+                          Remove some items to proceed.
                         </div>
                       ) : (
                         <div className="flex flex-col space-y-4">
@@ -412,20 +434,21 @@ const CartDetails: React.FC<{
                             rates={rates}
                             subTotal={subTotal ?? 0}
                             auth={auth}
-                            currency={auth.defaultCurrency ?? 'NGN'}
+                            currency={auth.defaultCurrency ?? "NGN"}
                           />
 
                           {!isNull(receiptData) ? (
                             <div className="flex flex-col space-y-4">
-                              {(receiptData?.orders && (receiptData?.orders as any[])).some(
-                                (order) => order.type === 'electric',
-                              ) && (
+                              {(
+                                receiptData?.orders &&
+                                (receiptData?.orders as any[])
+                              ).some((order) => order.type === "electric") && (
                                 <CustomButton
                                   submitting={isProcessing}
                                   submittingText=""
                                   icon={<Zap className="w-5 h-5 mr-2" />}
                                   iconPosition="before"
-                                  onClick={() => handleOpenReceipt('products')}
+                                  onClick={() => handleOpenReceipt("products")}
                                 >
                                   Get Tokens
                                 </CustomButton>
@@ -433,14 +456,18 @@ const CartDetails: React.FC<{
 
                               {receiptData?.orders &&
                                 (receiptData?.orders as any[]).some(
-                                  (order) => order.type === 'digital',
+                                  (order) => order.type === "digital"
                                 ) && (
                                   <CustomButton
                                     submitting={isProcessing}
                                     submittingText=""
-                                    icon={<PackageCheck className="w-5 h-5 mr-2" />}
+                                    icon={
+                                      <PackageCheck className="w-5 h-5 mr-2" />
+                                    }
                                     iconPosition="before"
-                                    onClick={() => handleOpenReceipt('products')}
+                                    onClick={() =>
+                                      handleOpenReceipt("products")
+                                    }
                                   >
                                     Access Product
                                   </CustomButton>
@@ -451,7 +478,7 @@ const CartDetails: React.FC<{
                                 submittingText=""
                                 icon={<Receipt className="w-5 h-5 mr-2" />}
                                 iconPosition="before"
-                                onClick={() => handleOpenReceipt('receipt')}
+                                onClick={() => handleOpenReceipt("receipt")}
                               >
                                 View Receipt
                               </CustomButton>
@@ -466,7 +493,9 @@ const CartDetails: React.FC<{
                                 iconPosition="before"
                                 onClick={() => handleProceedClick()}
                               >
-                                {subTotal === 0 ? 'Continue For Free' : 'Pay Now'}
+                                {subTotal === 0
+                                  ? "Continue For Free"
+                                  : "Pay Now"}
                               </CustomButton>
                             </div>
                           )}
@@ -486,7 +515,7 @@ const CartDetails: React.FC<{
             onClose={() => {
               setOpenReceipt(false);
             }}
-            header={'Receipt'}
+            header={"Receipt"}
             isHeightFull={true}
             isWidthFull={true}
           >
@@ -515,7 +544,7 @@ const CartDetails: React.FC<{
               removeRouteData();
               setReceiptData(data);
               setOpenReceipt(true);
-              toast.success('Order received');
+              toast.success("Order received");
             }}
           />
         )}
