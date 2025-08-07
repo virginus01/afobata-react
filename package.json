@@ -1,25 +1,24 @@
 {
-  "name": "afobata",
-  "version": "1.0.0",
-  "description": "Monorepo for Afobata applications",
-  "main": "index.js",
-  "packageManager": "npm@10.5.0",
+  "name": "my-turborepo",
+  "private": true,
   "scripts": {
-    "dev": "turbo run dev --filter=afobata-main",
     "build": "turbo run build",
+    "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "clean": "rm -rf node_modules && rm -f package-lock.json && npm install"
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
   },
-  "keywords": [],
-  "author": "Virginus Alajekwu",
-  "license": "MIT",
-  "workspaces": [
-    "public/*",
-    "public/**/*",
-    "private/*",
-    "private/**/*"
-  ],
   "devDependencies": {
-    "turbo": "^2.5.5"
-  }
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.5",
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@10.5.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }
