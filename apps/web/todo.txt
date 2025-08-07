@@ -1,4 +1,0 @@
-make blog page look like: https://blog-incoderweb.vercel.app/post https://www.youtube.com/watch?v=38GcHlFM-Sc
-
-
-migration: copy country, defaultCurrency from user to auth.
