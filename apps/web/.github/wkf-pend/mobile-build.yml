@@ -1,0 +1,143 @@
+name: Mobile App Build
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "temp-branch-*"
+  pull_request:
+    branches:
+      - "temp-branch-*"
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Extract tenant ID
+        id: tenant
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          TENANT_ID=$(echo $BRANCH_NAME | sed 's/temp-branch-//')
+          echo "tenant_id=$TENANT_ID" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: |
+          npm install
+
+      - name: Run npx cap sync
+        run: |
+          npx cap sync
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x android/gradlew
+
+      - name: Build Android (APK and AAB)
+        run: |
+          cd android
+          if [[ "${{ github.event.inputs.debug_mode }}" == "true" ]]; then
+            ./gradlew assembleDebug bundleDebug
+          else
+            ./gradlew assembleRelease bundleRelease
+          fi
+
+      - name: List Build Files
+        run: |
+          ls -R android/app/build/outputs/
+
+      - name: Generate build type
+        id: build_info
+        run: |
+          echo "build_type=$(if [[ "${{ github.event.inputs.debug_mode }}" == "true" ]]; then echo "debug"; else echo "release"; fi)" >> $GITHUB_OUTPUT
+
+      - name: Upload to S3
+        id: s3_upload
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          BUILD_TYPE="${{ steps.build_info.outputs.build_type }}"
+          TENANT_ID="${{ steps.tenant.outputs.tenant_id }}"
+          BUILD_PATH="mobile-builds/android/${TENANT_ID}"
+
+          # Rename APK and AAB with tenant ID
+          NEW_APK_NAME="app-${TENANT_ID}.apk"
+          NEW_AAB_NAME="app-${TENANT_ID}.aab"
+          SOURCE_APK="android/app/build/outputs/apk/${BUILD_TYPE}/app-${BUILD_TYPE}$([[ "$BUILD_TYPE" == "release" ]] && echo "-unsigned").apk"
+          SOURCE_AAB="android/app/build/outputs/bundle/${BUILD_TYPE}/app-${BUILD_TYPE}.aab"
+
+          # Create copies with new names
+          cp "$SOURCE_APK" "/tmp/$NEW_APK_NAME"
+          cp "$SOURCE_AAB" "/tmp/$NEW_AAB_NAME"
+
+          S3_PATH_APK="s3://afobata/${BUILD_PATH}/${NEW_APK_NAME}"
+          S3_PATH_AAB="s3://afobata/${BUILD_PATH}/${NEW_AAB_NAME}"
+
+          # Upload both builds with new names
+          aws s3 cp "/tmp/$NEW_APK_NAME" "$S3_PATH_APK" --region ${{ secrets.AWS_REGION }}
+          aws s3 cp "/tmp/$NEW_AAB_NAME" "$S3_PATH_AAB" --region ${{ secrets.AWS_REGION }}
+
+          # Set the main S3 URLs as outputs
+          echo "s3_url_apk=https://s3.${{ secrets.AWS_REGION }}.amazonaws.com/afobata/${BUILD_PATH}/${NEW_APK_NAME}" >> $GITHUB_OUTPUT
+          echo "s3_url_aab=https://s3.${{ secrets.AWS_REGION }}.amazonaws.com/afobata/${BUILD_PATH}/${NEW_AAB_NAME}" >> $GITHUB_OUTPUT
+
+          # Generate and upload build info
+          echo "{
+            \"buildTime\":\"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\",
+            \"commit\":\"${{ github.sha }}\",
+            \"branch\":\"${{ github.ref_name }}\",
+            \"environment\":\"${{ github.event.inputs.environment }}\",
+            \"buildType\":\"${BUILD_TYPE}\",
+            \"tenantId\":\"${TENANT_ID}\",
+            \"artifacts\": {
+              \"apk\": \"${BUILD_PATH}/${NEW_APK_NAME}\",
+              \"aab\": \"${BUILD_PATH}/${NEW_AAB_NAME}\"
+            }
+          }" > buildinfo.json
+
+          aws s3 cp buildinfo.json "s3://afobata/${BUILD_PATH}/buildinfo.json" --region ${{ secrets.AWS_REGION }}
+
+      - name: Send Build Notification
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"tenantId\": \"${{ steps.tenant.outputs.tenant_id }}\",
+              \"downloadUrls\": {
+                \"apk\": \"${{ steps.s3_upload.outputs.s3_url_apk }}\",
+                \"aab\": \"${{ steps.s3_upload.outputs.s3_url_aab }}\"
+              },
+              \"buildType\": \"${{ steps.build_info.outputs.build_type }}\",
+              \"buildTime\": \"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\",
+              \"commit\": \"${{ github.sha }}\",
+              \"branch\": \"${{ github.ref_name }}\"
+            }" \
+            https://afobata.com/api/a/post/callback
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-${{ steps.tenant.outputs.tenant_id }}
+          path: |
+            android/app/build/outputs/apk/${{ steps.build_info.outputs.build_type }}/app-${{ steps.build_info.outputs.build_type }}${{ steps.build_info.outputs.build_type == 'release' && '-unsigned' || '' }}.apk
+            android/app/build/outputs/bundle/${{ steps.build_info.outputs.build_type }}/app-${{ steps.build_info.outputs.build_type }}.aab
+
+  cleanup:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Delete branch
+        run: |
+          curl -X DELETE \
+            -H "Authorization: token ${{ secrets.G_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/${{ github.ref_name }}"
